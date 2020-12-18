@@ -1,7 +1,9 @@
 package sample;
 
 import javafx.application.Application;
+import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
@@ -10,16 +12,16 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Ellipse;
 import javafx.scene.shape.Line;
 import javafx.stage.Stage;
-
-
 import java.util.Random;
 
-public class Main extends Application {
-    private final char playerSymbol = 'X';
-    private final char computerSymbol = 'O';
+public class Main extends Application
+{
     boolean playable = true;
-    private Square[][] square =  new Square[3][3];
+    private final Square[][] square =  new Square[3][3];
     private final Label statusGame = new Label("Your move (Symbol X)");
+    private final Label result = new Label();
+    private int userResult;
+    private int computerResult;
 
     @Override
     public void start(Stage primaryStage)
@@ -33,15 +35,35 @@ public class Main extends Application {
             }
         }
 
+        Button button = new Button();
+        button.setText("New Game");
+        button.setOnAction(event ->
+                {
+                    for (int i = 0; i < 3; i++)
+                    {
+                        for (int j = 0; j < 3; j++)
+                        {
+                            square[i][j].setSymbol(' ');
+                        }
+                    }
+                    statusGame.setTextFill(Color.BLACK);
+                    statusGame.setText("Your move (Symbol X)");
+                });
+
         BorderPane borderPane = new BorderPane();
+        GridPane borderBottom = new GridPane();
+        GridPane.setMargin(borderBottom, new Insets(5, 10, 5, 10));
+        GridPane.setMargin(statusGame, new Insets(5, 10, 5, 10));
+        borderBottom.add(button,0,0);
+        borderBottom.add(statusGame,1,0);
+        borderBottom.add(result,2,0);
         borderPane.setCenter(gameBoard);
-        borderPane.setBottom(statusGame);
+        borderPane.setBottom(borderBottom);
 
         Scene scene = new Scene(borderPane, 600, 600);
         primaryStage.setTitle("XO game");
         primaryStage.setScene(scene);
         primaryStage.show();
-
     }
 
     public boolean isFull()
@@ -118,6 +140,7 @@ public class Main extends Application {
                 line2.setStroke(Color.RED);
 
                 this.getChildren().addAll(line1, line2);
+
             }
             else if (this.symbol == 'O')
             {
@@ -131,6 +154,12 @@ public class Main extends Application {
 
                 this.getChildren().add(ellipse);
             }
+            else if(this.symbol==' ')
+            {
+                this.getChildren().removeAll();
+                this.getChildren().setAll();
+                playable=true;
+            }
         }
         private void computerMove()
         {
@@ -141,6 +170,7 @@ public class Main extends Application {
                 int i = random.nextInt(3);
                 int j = random.nextInt(3);
 
+                char computerSymbol = 'O';
                 if (square[i][j].getSymbol() == ' ')
                 {
                     square[i][j].setSymbol(computerSymbol);
@@ -152,7 +182,8 @@ public class Main extends Application {
                     statusGame.setTextFill(Color.GREEN);
                     statusGame.setText(computerSymbol + " won! The game is over");
                     playable=false;
-
+                    computerResult++;
+                    result.setText("User: " + userResult + " Computer: " + computerResult);
                 }
                 else if (isFull())
                 {
@@ -160,7 +191,6 @@ public class Main extends Application {
                     System.out.println("Fully");
                     playable=false;
                 }
-
             }
         }
 
@@ -168,16 +198,16 @@ public class Main extends Application {
         {
             if (symbol == ' ' && playable)
             {
+                char playerSymbol = 'X';
                 setSymbol(playerSymbol);
-
                 if (isWinner(playerSymbol))
                 {
                     statusGame.setTextFill(Color.RED);
                     statusGame.setText(playerSymbol + " won! The game is over");
                     playable=false;
-
+                    userResult++;
+                    result.setText("User: " + userResult + " Computer: " + computerResult);
                 }
-
                 else if (isFull())
                 {
                     statusGame.setText("Draw! The game is over");
