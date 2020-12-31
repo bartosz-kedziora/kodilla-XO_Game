@@ -3,11 +3,8 @@ package sample;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Pane;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Ellipse;
 import javafx.scene.shape.Line;
@@ -16,12 +13,10 @@ import java.util.Random;
 
 public class Main extends Application
 {
-    boolean playable = true;
+    private boolean playable = true;
     private final Square[][] square =  new Square[3][3];
-    private final Label statusGame = new Label("Your move (Symbol X)");
-    private final Label result = new Label();
-    private int userResult;
-    private int computerResult;
+    private final char playerSymbol = 'X';
+    private final char computerSymbol = 'O';
 
     @Override
     public void start(Stage primaryStage)
@@ -46,27 +41,50 @@ public class Main extends Application
                             square[i][j].setSymbol(' ');
                         }
                     }
-                    statusGame.setTextFill(Color.BLACK);
-                    statusGame.setText("Your move (Symbol X)");
                 });
 
         BorderPane borderPane = new BorderPane();
         GridPane borderBottom = new GridPane();
         GridPane.setMargin(borderBottom, new Insets(5, 10, 5, 10));
-        GridPane.setMargin(statusGame, new Insets(5, 10, 5, 10));
+
+        MenuBar menuBar = new MenuBar();
+
+        Menu menuFile = new Menu("File");
+        Menu menuHelp = new Menu("Help");
+
+        MenuItem menuSave = new MenuItem("Save");
+        MenuItem menuLoad = new MenuItem("Load");
+        MenuItem menuExit = new MenuItem("Exit");
+        MenuItem menuInstruction = new MenuItem("Instruction");
+
+        menuSave.setOnAction(event -> System.out.println("Save"));
+
+        menuLoad.setOnAction(event -> System.out.println("Load"));
+
+        menuExit.setOnAction(event -> primaryStage.close());
+
+        menuInstruction.setOnAction(event -> System.out.println("instruction"));
+
+        menuFile.getItems().addAll(menuSave, menuLoad, menuExit);
+        menuHelp.getItems().add(menuInstruction);
+        menuBar.getMenus().addAll(menuFile, menuHelp);
+
+        VBox vBox = new VBox(menuBar);
+        vBox.setStyle("-fx-border-color: black");
+        borderPane.setTop(vBox);
+
         borderBottom.add(button,0,0);
-        borderBottom.add(statusGame,1,0);
-        borderBottom.add(result,2,0);
         borderPane.setCenter(gameBoard);
         borderPane.setBottom(borderBottom);
 
         Scene scene = new Scene(borderPane, 600, 600);
         primaryStage.setTitle("XO game");
         primaryStage.setScene(scene);
+
         primaryStage.show();
     }
 
-    public boolean isFull()
+    public void isFull()
     {
         for (int i = 0; i < 3; i++)
         {
@@ -74,11 +92,11 @@ public class Main extends Application
             {
                 if (square[i][j].getSymbol() == ' ')
                 {
-                    return false;
+                    return;
                 }
             }
         }
-        return true;
+        playable=false;
     }
 
     public boolean isWinner(char symbol)
@@ -106,6 +124,22 @@ public class Main extends Application
 
         return square[0][2].getSymbol() == symbol && square[1][1].getSymbol() == symbol && square[2][0].getSymbol() == symbol;
     }
+    private void computerMove()
+    {
+        boolean move = true;
+        while (move)
+        {
+            Random random = new Random();
+            int i = random.nextInt(3);
+            int j = random.nextInt(3);
+
+            if (square[i][j].getSymbol() == ' ')
+            {
+                square[i][j].setSymbol(computerSymbol);
+                move=false;
+            }
+        }
+    }
 
     public class Square extends Pane
     {
@@ -115,7 +149,30 @@ public class Main extends Application
         {
             this.setStyle("-fx-border-color: black");
             this.setPrefSize(1600, 900);
-            this.setOnMouseClicked(e -> playerTurn());
+            setOnMouseClicked(mouseEvent ->
+            {
+                if(!playable)
+                    return;
+
+                if(getSymbol()==' '&&playable)
+                {
+                    setSymbol(playerSymbol);
+                    isFull();
+                    if(isWinner(playerSymbol))
+                    {
+                        playable=false;
+                    }
+
+                    if(playable)
+                    {
+                        computerMove();
+                        if(isWinner(computerSymbol))
+                        {
+                            playable=false;
+                        }
+                    }
+                }
+            });
         }
 
         public char getSymbol()
@@ -159,65 +216,6 @@ public class Main extends Application
                 this.getChildren().removeAll();
                 this.getChildren().setAll();
                 playable=true;
-            }
-        }
-        private void computerMove()
-        {
-            boolean move = true;
-            while (move)
-            {
-                Random random = new Random();
-                int i = random.nextInt(3);
-                int j = random.nextInt(3);
-
-                char computerSymbol = 'O';
-                if (square[i][j].getSymbol() == ' ')
-                {
-                    square[i][j].setSymbol(computerSymbol);
-                    move=false;
-                }
-
-                if (isWinner(computerSymbol))
-                {
-                    statusGame.setTextFill(Color.GREEN);
-                    statusGame.setText(computerSymbol + " won! The game is over");
-                    playable=false;
-                    computerResult++;
-                    result.setText("User: " + userResult + " Computer: " + computerResult);
-                }
-                else if (isFull())
-                {
-                    statusGame.setText("Draw! The game is over");
-                    System.out.println("Fully");
-                    playable=false;
-                }
-            }
-        }
-
-        private void playerTurn()
-        {
-            if (symbol == ' ' && playable)
-            {
-                char playerSymbol = 'X';
-                setSymbol(playerSymbol);
-                if (isWinner(playerSymbol))
-                {
-                    statusGame.setTextFill(Color.RED);
-                    statusGame.setText(playerSymbol + " won! The game is over");
-                    playable=false;
-                    userResult++;
-                    result.setText("User: " + userResult + " Computer: " + computerResult);
-                }
-                else if (isFull())
-                {
-                    statusGame.setText("Draw! The game is over");
-                    playable=false;
-                }
-
-                else
-                {
-                    computerMove();
-                }
             }
         }
     }
